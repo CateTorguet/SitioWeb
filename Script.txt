@@ -1,0 +1,158 @@
+------------------------------------------------------
+Script para crear la base de datos:
+------------------------------------------------------
+USE master
+
+if exists (select * from sysdatabases where name='fotos')
+begin
+  raiserror('La base de datos existe; eliminándola....',0,1)
+  DROP database fotos
+end
+GO
+
+CHECKPOINT
+go
+
+raiserror('Creando base de datos fotos....',0,1)
+go
+
+
+CREATE DATABASE fotos
+GO
+
+USE fotos
+GO
+
+if db_name() <> 'fotos'
+   raiserror('Error, ''USE fotos'' falló!  Killing the SPID now.'
+            ,22,127) with log
+GO
+
+ALTER DATABASE fotos SET RECOVERY SIMPLE
+/*** En SQL Server anterior a 2012 cambiar la línea anterior por la siguiente ***/
+/*** execute sp_dboption 'fotos' ,'trunc. log on chkpt.' ,'true' ***/
+GO
+
+execute sp_addtype id      ,'varchar(11)' ,'NOT NULL'
+execute sp_addtype tid     ,'varchar(6)'  ,'NOT NULL'
+execute sp_addtype empid   ,'char(9)'     ,'NOT NULL'
+
+raiserror('Creando la tabla album....',0,1)
+
+GO
+
+CREATE TABLE album
+(
+  foto varchar(30),
+  nombre varchar(30),
+  autor varchar(30),
+  descripcion varchar(400)
+)
+GO
+
+UPDATE STATISTICS album
+GO
+
+CHECKPOINT
+GO
+
+USE master
+GO
+
+CHECKPOINT
+GO
+
+declare @dttm varchar(55)
+select  @dttm=convert(varchar,getdate(),113)
+raiserror('Editando %s ....',1,1,@dttm) with nowait
+GO
+quit
+
+------------------------------------------------------
+Script para crear y dar permisos al usuario "Servicio de red" para que pueda acceder a la base de datos.
+Nota: en VS, poner un GO después de cada línea. También, tener en cuenta que la primera
+línea puede sobrar si ya está creado ese inicio de sesión y la segunda también, si ya
+estamos en la BBDD.
+------------------------------------------------------
+
+CREATE LOGIN [NT AUTHORITY\Servicio de Red] FROM WINDOWS 
+USE fotos 
+CREATE USER [Servicio de Red] FROM LOGIN [NT AUTHORITY\Servicio de Red] 
+GRANT CONNECT TO [Servicio de Red] 
+EXEC sp_addrolemember 'db_owner', 'Servicio de Red' 
+GO
+
+------------------------------------------------------
+Código del archivo IdentityModels.cs
+------------------------------------------------------
+namespace ...
+{
+  // Para agregar datos del usuario, agregue más propiedades a su clase de usuario. Visite http://go.microsoft.com/fwlink/?LinkID=317594 para obtener más información.
+  /* 
+     EL CÓDIGO SIGUIENTE MODIFICA LA CLASE ApplicationUser Y AÑADE LAS CLASES
+     UserManager (si es que no está) ApplicationRole Y RoleManager,
+     EL RESTO DEL CÓDIGO QUEDA COMO ESTÁ.
+   */
+
+  public class UserManager : UserManager<ApplicationUser>
+  {
+    public UserManager()
+        : base(new UserStore<ApplicationUser>(new ApplicationDbContext()))
+    {
+    }
+  }
+
+  public class ApplicationUser : IdentityUser
+  {
+    // ...
+
+    public static ApplicationUser CreateUser(string user_name, string password)
+    {
+      var um = new UserManager();
+      var user = new ApplicationUser() { UserName = user_name };
+      var idResult = um.Create(user, password);
+      if (idResult.Succeeded)
+        return user;
+      return null;
+    }
+
+    public bool AddUserToRole(ApplicationRole role)
+    {
+      var um = new UserManager();
+      var idResult = um.AddToRole(this.Id, role.Name);
+      return idResult.Succeeded;
+    }
+  }
+
+  public class ApplicationRole : IdentityRole
+  {
+    public ApplicationRole() : base() { }
+
+    public ApplicationRole(string name) : base(name) { }
+
+    public static ApplicationRole CreateRole(string name)
+    {
+      var rm = new RoleManager();
+      ApplicationRole role = new ApplicationRole(name);
+      var idResult = rm.Create(role);
+      if (idResult.Succeeded)
+        return role;
+      return null;
+    }
+
+    public static bool FindRole(string name)
+    {
+      var rm = new RoleManager();
+      return rm.RoleExists(name);
+    }
+  }
+
+  public class RoleManager : RoleManager<ApplicationRole>
+  {
+    public RoleManager()
+        : base(new RoleStore<ApplicationRole>(new ApplicationDbContext()))
+    {
+      System.Data.Entity.Database.SetInitializer(new System.Data.Entity.DropCreateDatabaseIfModelChanges<ApplicationDbContext>());
+      // Para borrar la base de datos cambiar DropCreateDatabaseIfModelChanges por DropCreateDatabaseAlways
+    }
+  }

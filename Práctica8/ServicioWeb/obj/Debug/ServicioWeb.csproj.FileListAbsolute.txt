@@ -1,0 +1,7 @@
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\bin\ServicioWeb.dll.config
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\bin\ServicioWeb.dll
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\bin\ServicioWeb.pdb
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\obj\Debug\ServicioWeb.csproj.AssemblyReference.cache
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\obj\Debug\ServicioWeb.csproj.CoreCompileInputs.cache
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\obj\Debug\ServicioWeb.dll
+C:\Users\HP\Desktop\P.Visual\P8\Práctica8\ServicioWeb\obj\Debug\ServicioWeb.pdb
